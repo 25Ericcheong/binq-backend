@@ -23,4 +23,6 @@ func main() {
 		fmt.Println("Error occurred while trying to run server")
 		fmt.Println(err.Error())
 	}
+
+	fmt.Println("Successful start up. Waiting for request... ")
 }
