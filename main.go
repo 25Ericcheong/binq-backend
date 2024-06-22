@@ -1,12 +1,36 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 )
 
 func main() {
 	fmt.Println("Starting Binq backend server")
+
+	connStr := "postgres://postgres:LoveS1010_@localhost:8000/binq-pg-dev?sslmode=disable"
+
+	db, dbErr := sql.Open("postgres", connStr)
+	if dbErr != nil {
+		fmt.Println("Error occurred while trying to setup database")
+		log.Fatal(dbErr.Error())
+	}
+
+	defer func(db *sql.DB) {
+		dbCloseErr := db.Close()
+		if dbCloseErr != nil {
+			fmt.Println("Error occurred while trying to close database")
+			log.Fatal(dbErr.Error())
+		}
+	}(db)
+
+	dbPingErr := db.Ping()
+	if dbPingErr != nil {
+		fmt.Println("Error while pinging database")
+		log.Fatal(dbPingErr.Error())
+	}
 
 	mux := http.NewServeMux()
 
