@@ -10,7 +10,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		_, err := fmt.Fprint(w, "Welcome to the index")
 
 		if err != nil {
