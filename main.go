@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	// to be able to open postgres driver
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -12,24 +15,24 @@ func main() {
 
 	connStr := "postgres://postgres:LoveS1010_@localhost:8000/binq-pg-dev?sslmode=disable"
 
-	db, dbErr := sql.Open("postgres", connStr)
-	if dbErr != nil {
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
 		fmt.Println("Error occurred while trying to setup database")
-		log.Fatal(dbErr.Error())
+		log.Fatal(err.Error())
 	}
 
 	defer func(db *sql.DB) {
-		dbCloseErr := db.Close()
-		if dbCloseErr != nil {
+		err = db.Close()
+		if err != nil {
 			fmt.Println("Error occurred while trying to close database")
-			log.Fatal(dbErr.Error())
+			log.Fatal(err.Error())
 		}
 	}(db)
 
-	dbPingErr := db.Ping()
-	if dbPingErr != nil {
+	err = db.Ping()
+	if err != nil {
 		fmt.Println("Error while pinging database")
-		log.Fatal(dbPingErr.Error())
+		log.Fatal(err.Error())
 	}
 
 	mux := http.NewServeMux()
@@ -42,7 +45,7 @@ func main() {
 		}
 	})
 
-	err := http.ListenAndServe("localhost:8080", mux)
+	err = http.ListenAndServe("localhost:8080", mux)
 	if err != nil {
 		fmt.Println("Error occurred while trying to run server")
 		fmt.Println(err.Error())
