@@ -21,6 +21,8 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	createTicketTable(db)
+
 	defer func(db *sql.DB) {
 		err = db.Close()
 		if err != nil {
@@ -52,4 +54,33 @@ func main() {
 	}
 
 	fmt.Println("Successful start up. Waiting for request... ")
+}
+
+// Real application uses migration
+func createTicketTable(db *sql.DB) {
+	/* Ticket Table
+	id
+	ticket_num
+	branch
+	customer_name
+	customer_pax_num
+	customer_phone
+	created_on_date_time
+	*/
+	query := "CREATE TABLE IF NOT EXISTS ticket" +
+		"(" +
+		"id SERIAL PRIMARY KEY," +
+		"ticket_num INTEGER NOT NULL CHECK(ticket_num > -1)," +
+		"branch VARCHAR(50) NOT NULL," +
+		"customer_name VARCHAR(100) NOT NULL," +
+		"customer_pax_num INTEGER NOT NULL CHECK(customer_pax_num > 0)," +
+		"customer_phone VARCHAR(20) NOT NULL," +
+		"created_on_date_time TIMESTAMP NOT NULL DEFAULT NOW()" +
+		")"
+
+	_, err := db.Exec(query)
+	if err != nil {
+		fmt.Println("Error while creating ticket table")
+		log.Fatal(err.Error())
+	}
 }
