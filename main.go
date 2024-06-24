@@ -3,8 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
+	"os"
 
 	// to be able to open postgres driver
 	_ "github.com/lib/pq"
@@ -13,9 +15,14 @@ import (
 func main() {
 	fmt.Println("Starting Binq backend server")
 
-	connStr := "postgres://postgres:LoveS1010_@localhost:8000/binq-pg-dev?sslmode=disable"
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
-	db, err := sql.Open("postgres", connStr)
+	connStr := os.Getenv("DB_CONNECTION_STRING")
+
+	db, err := sql.Open(os.Getenv("DB_DRIVER"), connStr)
 	if err != nil {
 		fmt.Println("Error occurred while trying to setup database")
 		log.Fatal(err.Error())
@@ -47,7 +54,7 @@ func main() {
 		}
 	})
 
-	err = http.ListenAndServe("localhost:8080", mux)
+	err = http.ListenAndServe(os.Getenv("URL"), mux)
 	if err != nil {
 		fmt.Println("Error occurred while trying to run server")
 		fmt.Println(err.Error())
