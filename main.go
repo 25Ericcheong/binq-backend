@@ -7,21 +7,35 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	// to be able to open postgres driver
 	_ "github.com/lib/pq"
 )
 
-type DbTicket struct {
+type Ticket struct {
+	Branch         string
+	CustomerName   string
+	CustomerPaxNum int
+	CustomerPhone  string
 }
 
-//"ticket_num INTEGER NOT NULL CHECK(ticket_num > -1)," +
+type DbTicket struct {
+	TicketId          string
+	Branch            string
+	CustomerName      string
+	CustomerPaxNum    int
+	CustomerPhone     string
+	CreatedOnDateTime time.Time
+}
+
 //"branch VARCHAR(50) NOT NULL," +
 //"customer_name VARCHAR(100) NOT NULL," +
 //"customer_pax_num INTEGER NOT NULL CHECK(customer_pax_num > 0)," +
 //"customer_phone VARCHAR(20) NOT NULL," +
 
 func main() {
+	time.Now()
 	fmt.Println("Starting Binq backend server")
 
 	err := godotenv.Load()
@@ -38,6 +52,14 @@ func main() {
 	}
 
 	createTicketTable(db)
+
+	newTicket := Ticket{"SS15", "Eric", 5, "0122817216"}
+	rowTicket := insertDbTicket(db, newTicket)
+
+	fmt.Printf("Ticket details \n"+
+		"Id: %s \n"+
+		"Customer Name: %s \n"+
+		"Creation Date: %s \n", rowTicket.TicketId, rowTicket.CustomerName, rowTicket.CreatedOnDateTime)
 
 	defer func(db *sql.DB) {
 		err = db.Close()
@@ -73,10 +95,11 @@ func main() {
 }
 
 // Real application uses migration
+// TODO: Setup migration setup during deployment as well as testing
 func createTicketTable(db *sql.DB) {
 	/* Ticket Table
 	id SERIAL - so PK auto create
-	ticket_num
+	ticket_id - used to display to customer
 	branch
 	customer_name
 	customer_pax_num
@@ -84,18 +107,37 @@ func createTicketTable(db *sql.DB) {
 	created_on_date_time DEFAULT NOW() - so by default inserts today's date
 	*/
 	query := "CREATE TABLE IF NOT EXISTS ticket" +
-		"(" +
-		"id SERIAL PRIMARY KEY," +
+		"(id SERIAL PRIMARY KEY," +
+		"ticket_id VARCHAR(20) UNIQUE NOT NULL," +
 		"branch VARCHAR(50) NOT NULL," +
 		"customer_name VARCHAR(100) NOT NULL," +
 		"customer_pax_num INTEGER NOT NULL CHECK(customer_pax_num > 0)," +
 		"customer_phone VARCHAR(20) NOT NULL," +
-		"created_on_date_time TIMESTAMP NOT NULL DEFAULT NOW()" +
-		")"
+		"created_on_date_time TIMESTAMP NOT NULL DEFAULT NOW())"
 
 	_, err := db.Exec(query)
 	if err != nil {
 		fmt.Println("Error while creating ticket table")
 		log.Fatal(err.Error())
 	}
+}
+
+func insertDbTicket(db *sql.DB, ticket Ticket) (row DbTicket) {
+	query := "INSERT INTO ticket" +
+		"(ticket_id, branch, customer_name, customer_pax_num, customer_phone) " +
+		"VALUES ($1, $2, $3, $4, $5)" +
+		"RETURNING ticket_id, branch, customer_name, customer_pax_num, customer_phone, created_on_date_time"
+
+	ticketId := ticket.Branch + "_1"
+
+	err := db.
+		QueryRow(query, ticketId, ticket.Branch, ticket.CustomerName, ticket.CustomerPaxNum, ticket.CustomerPhone).
+		Scan(&row.TicketId, &row.Branch, &row.CustomerName, &row.CustomerPaxNum, &row.CustomerPhone, &row.CreatedOnDateTime)
+
+	if err != nil {
+		fmt.Println("Error while inserting ticket into ticket table")
+		log.Fatal(err.Error())
+	}
+
+	return row
 }
