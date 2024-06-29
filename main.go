@@ -52,10 +52,11 @@ func main() {
 		fmt.Println("Error occurred while trying to setup database")
 		log.Fatal(err.Error())
 	}
-
 	createTicketTable(db)
 
 	newTicket := Ticket{"1", "Damansara", "Eric", 5, "0122817216"}
+	newTicket1 := Ticket{"1", "Damansara", "Bobby", 1, "0122817216"}
+	newTicket2 := Ticket{"1", "Damansara", "Billy", 3, "0122817216"}
 
 	row, exists := getSingleDbTicket(db, newTicket.Id)
 
@@ -63,10 +64,24 @@ func main() {
 		row = insertDbTicket(db, newTicket)
 	}
 
+	insertDbTicket(db, newTicket1)
+	insertDbTicket(db, newTicket2)
+
 	fmt.Printf("Ticket details \n"+
 		"Id: %s \n"+
 		"Customer Name: %s \n"+
 		"Creation Date: %s \n", row.Id, row.CustomerName, row.CreatedOnDateTime)
+
+	tickets, err := getTicketsByBranch(db, "Damansara")
+	if err != nil {
+		log.Println("Error while trying to read multiple tickets from a branch")
+		log.Fatal(err.Error())
+	}
+
+	fmt.Println("Going through inserted tickets found in ticket based on branch: Damansara")
+	for _, ticket := range tickets {
+		fmt.Println(ticket.Id + " " + ticket.CustomerName + " " + ticket.Branch)
+	}
 
 	err = db.Ping()
 	if err != nil {
@@ -128,30 +143,30 @@ func createTicketTable(db *sql.DB) {
 	}
 }
 
-func insertDbTicket(db *sql.DB, ticket Ticket) (row DbTicket) {
+func insertDbTicket(db *sql.DB, inputTicket Ticket) (ticket DbTicket) {
 	query := `INSERT INTO ticket 
     	(branch, customer_name, customer_pax_num, customer_phone) 
 		VALUES ($1, $2, $3, $4)
 		RETURNING id, branch, customer_name, customer_pax_num, customer_phone, created_on_date_time`
 
 	err := db.
-		QueryRow(query, ticket.Branch, ticket.CustomerName, ticket.CustomerPaxNum, ticket.CustomerPhone).
-		Scan(&row.Id, &row.Branch, &row.CustomerName, &row.CustomerPaxNum, &row.CustomerPhone, &row.CreatedOnDateTime)
+		QueryRow(query, inputTicket.Branch, inputTicket.CustomerName, inputTicket.CustomerPaxNum, inputTicket.CustomerPhone).
+		Scan(&ticket.Id, &ticket.Branch, &ticket.CustomerName, &ticket.CustomerPaxNum, &ticket.CustomerPhone, &ticket.CreatedOnDateTime)
 
 	if err != nil {
 		fmt.Println("Error while inserting ticket into ticket table")
 		log.Fatal(err.Error())
 	}
 
-	return row
+	return ticket
 }
 
-func getSingleDbTicket(db *sql.DB, ticketId string) (row DbTicket, exists bool) {
+func getSingleDbTicket(db *sql.DB, ticketId string) (ticket DbTicket, exists bool) {
 	query := `SELECT * FROM ticket WHERE id = $1`
 
 	err := db.
 		QueryRow(query, ticketId).
-		Scan(&row.Id, &row.Branch, &row.CustomerName, &row.CustomerPaxNum, &row.CustomerPhone, &row.CreatedOnDateTime)
+		Scan(&ticket.Id, &ticket.Branch, &ticket.CustomerName, &ticket.CustomerPaxNum, &ticket.CustomerPhone, &ticket.CreatedOnDateTime)
 
 	if err != nil {
 
@@ -165,12 +180,38 @@ func getSingleDbTicket(db *sql.DB, ticketId string) (row DbTicket, exists bool) 
 		return DbTicket{}, false
 	}
 
-	return row, true
+	return ticket, true
 }
 
-//func getTicketsByBranch(db *sql.DB, branch string) (rows DbTicket) {
-//	query := "SELECT ticket_id, branch, customer_name, customer_pax_num, customer_phone, created_on_date_time" +
-//		"FROM ticket" +
-//		"WHERE branch=" + branch
-//
-//}
+func getTicketsByBranch(db *sql.DB, branch string) ([]DbTicket, error) {
+	query := `SELECT * FROM ticket WHERE branch = $1`
+
+	rows, err := db.Query(query, branch)
+	if err != nil {
+		return nil, err
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Fatal("Error while trying to close rows of tickets acquired from database")
+		}
+	}(rows)
+
+	var tickets []DbTicket
+
+	for rows.Next() {
+		var ticket DbTicket
+		err := rows.Scan(&ticket.Id, &ticket.Branch, &ticket.CustomerName, &ticket.CustomerPhone,
+			&ticket.CustomerPaxNum, &ticket.CreatedOnDateTime)
+
+		if err != nil {
+			return tickets, err
+		}
+		tickets = append(tickets, ticket)
+	}
+
+	if rows.Err() != nil {
+		return tickets, err
+	}
+	return tickets, nil
+}
