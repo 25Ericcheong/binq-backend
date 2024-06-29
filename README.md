@@ -12,3 +12,4 @@ Current purpose of having a backend is to allow customers to queue digitally. Th
 # Key notes
 These are notes that I found while researching on how to best maintain certain aspects of the backend
 - Datahase migration will rely solely on golang-migrate package. Will use a script to run the migrations and prior to actual deployment to production; will attempt to build docker container with postgresql and test if migration has taken place
+- [Postgres row data conversion to golang struct](https://stackoverflow.com/questions/17265463/how-do-i-convert-a-database-row-into-a-struct) - is there a better way of doing this without relying on external libraries?
