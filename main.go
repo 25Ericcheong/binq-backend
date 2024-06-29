@@ -66,13 +66,13 @@ func main() {
 // Real application uses migration
 func createTicketTable(db *sql.DB) {
 	/* Ticket Table
-	id
+	id SERIAL - so PK auto create
 	ticket_num
 	branch
 	customer_name
 	customer_pax_num
 	customer_phone
-	created_on_date_time
+	created_on_date_time DEFAULT NOW() - so by default inserts today's date
 	*/
 	query := "CREATE TABLE IF NOT EXISTS ticket" +
 		"(" +
