@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/joho/godotenv"
 	"log"
@@ -153,8 +154,14 @@ func getSingleDbTicket(db *sql.DB, ticketId string) (row DbTicket, exists bool) 
 		Scan(&row.Id, &row.Branch, &row.CustomerName, &row.CustomerPaxNum, &row.CustomerPhone, &row.CreatedOnDateTime)
 
 	if err != nil {
+
+		if errors.Is(err, sql.ErrNoRows) {
+			fmt.Println("No row found with provided id: " + ticketId)
+			return DbTicket{}, false
+		}
+
 		//Probably no rows found
-		fmt.Println("Error: " + err.Error())
+		fmt.Println("Unexpected error " + err.Error())
 		return DbTicket{}, false
 	}
 
