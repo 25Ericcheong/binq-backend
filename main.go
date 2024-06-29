@@ -14,6 +14,7 @@ import (
 )
 
 type Ticket struct {
+	Id             string
 	Branch         string
 	CustomerName   string
 	CustomerPaxNum int
@@ -21,7 +22,7 @@ type Ticket struct {
 }
 
 type DbTicket struct {
-	TicketId          string
+	Id                string
 	Branch            string
 	CustomerName      string
 	CustomerPaxNum    int
@@ -53,21 +54,18 @@ func main() {
 
 	createTicketTable(db)
 
-	newTicket := Ticket{"SS15", "Eric", 5, "0122817216"}
-	rowTicket := insertDbTicket(db, newTicket)
+	newTicket := Ticket{"1", "Damansara", "Eric", 5, "0122817216"}
+
+	row, exists := getSingleDbTicket(db, newTicket.Id)
+
+	if !exists {
+		row = insertDbTicket(db, newTicket)
+	}
 
 	fmt.Printf("Ticket details \n"+
 		"Id: %s \n"+
 		"Customer Name: %s \n"+
-		"Creation Date: %s \n", rowTicket.TicketId, rowTicket.CustomerName, rowTicket.CreatedOnDateTime)
-
-	defer func(db *sql.DB) {
-		err = db.Close()
-		if err != nil {
-			fmt.Println("Error occurred while trying to close database")
-			log.Fatal(err.Error())
-		}
-	}(db)
+		"Creation Date: %s \n", row.Id, row.CustomerName, row.CreatedOnDateTime)
 
 	err = db.Ping()
 	if err != nil {
@@ -92,6 +90,14 @@ func main() {
 		fmt.Println("Error occurred while trying to run server")
 		fmt.Println(err.Error())
 	}
+
+	defer func(db *sql.DB) {
+		err = db.Close()
+		if err != nil {
+			fmt.Println("Error occurred while trying to close database")
+			log.Fatal(err.Error())
+		}
+	}(db)
 }
 
 // Real application uses migration
@@ -106,14 +112,13 @@ func createTicketTable(db *sql.DB) {
 	customer_phone
 	created_on_date_time DEFAULT NOW() - so by default inserts today's date
 	*/
-	query := "CREATE TABLE IF NOT EXISTS ticket" +
-		"(id SERIAL PRIMARY KEY," +
-		"ticket_id VARCHAR(20) UNIQUE NOT NULL," +
-		"branch VARCHAR(50) NOT NULL," +
-		"customer_name VARCHAR(100) NOT NULL," +
-		"customer_pax_num INTEGER NOT NULL CHECK(customer_pax_num > 0)," +
-		"customer_phone VARCHAR(20) NOT NULL," +
-		"created_on_date_time TIMESTAMP NOT NULL DEFAULT NOW())"
+	query := `CREATE TABLE IF NOT EXISTS ticket
+		(id SERIAL PRIMARY KEY, 
+		branch VARCHAR(50) NOT NULL,
+		customer_name VARCHAR(100) NOT NULL,
+		customer_pax_num INTEGER NOT NULL CHECK(customer_pax_num > 0),
+		customer_phone VARCHAR(20) NOT NULL,
+		created_on_date_time TIMESTAMP NOT NULL DEFAULT NOW())`
 
 	_, err := db.Exec(query)
 	if err != nil {
@@ -123,16 +128,14 @@ func createTicketTable(db *sql.DB) {
 }
 
 func insertDbTicket(db *sql.DB, ticket Ticket) (row DbTicket) {
-	query := "INSERT INTO ticket" +
-		"(ticket_id, branch, customer_name, customer_pax_num, customer_phone) " +
-		"VALUES ($1, $2, $3, $4, $5)" +
-		"RETURNING ticket_id, branch, customer_name, customer_pax_num, customer_phone, created_on_date_time"
-
-	ticketId := ticket.Branch + "_1"
+	query := `INSERT INTO ticket 
+    	(branch, customer_name, customer_pax_num, customer_phone) 
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, branch, customer_name, customer_pax_num, customer_phone, created_on_date_time`
 
 	err := db.
-		QueryRow(query, ticketId, ticket.Branch, ticket.CustomerName, ticket.CustomerPaxNum, ticket.CustomerPhone).
-		Scan(&row.TicketId, &row.Branch, &row.CustomerName, &row.CustomerPaxNum, &row.CustomerPhone, &row.CreatedOnDateTime)
+		QueryRow(query, ticket.Branch, ticket.CustomerName, ticket.CustomerPaxNum, ticket.CustomerPhone).
+		Scan(&row.Id, &row.Branch, &row.CustomerName, &row.CustomerPaxNum, &row.CustomerPhone, &row.CreatedOnDateTime)
 
 	if err != nil {
 		fmt.Println("Error while inserting ticket into ticket table")
@@ -141,3 +144,26 @@ func insertDbTicket(db *sql.DB, ticket Ticket) (row DbTicket) {
 
 	return row
 }
+
+func getSingleDbTicket(db *sql.DB, ticketId string) (row DbTicket, exists bool) {
+	query := `SELECT * FROM ticket WHERE id = $1`
+
+	err := db.
+		QueryRow(query, ticketId).
+		Scan(&row.Id, &row.Branch, &row.CustomerName, &row.CustomerPaxNum, &row.CustomerPhone, &row.CreatedOnDateTime)
+
+	if err != nil {
+		//Probably no rows found
+		fmt.Println("Error: " + err.Error())
+		return DbTicket{}, false
+	}
+
+	return row, true
+}
+
+//func getTicketsByBranch(db *sql.DB, branch string) (rows DbTicket) {
+//	query := "SELECT ticket_id, branch, customer_name, customer_pax_num, customer_phone, created_on_date_time" +
+//		"FROM ticket" +
+//		"WHERE branch=" + branch
+//
+//}
