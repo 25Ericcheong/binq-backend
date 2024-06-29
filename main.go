@@ -12,6 +12,15 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type DbTicket struct {
+}
+
+//"ticket_num INTEGER NOT NULL CHECK(ticket_num > -1)," +
+//"branch VARCHAR(50) NOT NULL," +
+//"customer_name VARCHAR(100) NOT NULL," +
+//"customer_pax_num INTEGER NOT NULL CHECK(customer_pax_num > 0)," +
+//"customer_phone VARCHAR(20) NOT NULL," +
+
 func main() {
 	fmt.Println("Starting Binq backend server")
 
@@ -54,13 +63,13 @@ func main() {
 		}
 	})
 
-	err = http.ListenAndServe(os.Getenv("URL"), mux)
+	url := os.Getenv("URL")
+	fmt.Println("Successful! Listening on: " + url)
+	err = http.ListenAndServe(url, mux)
 	if err != nil {
 		fmt.Println("Error occurred while trying to run server")
 		fmt.Println(err.Error())
 	}
-
-	fmt.Println("Successful start up. Waiting for request... ")
 }
 
 // Real application uses migration
@@ -77,7 +86,6 @@ func createTicketTable(db *sql.DB) {
 	query := "CREATE TABLE IF NOT EXISTS ticket" +
 		"(" +
 		"id SERIAL PRIMARY KEY," +
-		"ticket_num INTEGER NOT NULL CHECK(ticket_num > -1)," +
 		"branch VARCHAR(50) NOT NULL," +
 		"customer_name VARCHAR(100) NOT NULL," +
 		"customer_pax_num INTEGER NOT NULL CHECK(customer_pax_num > 0)," +
