@@ -194,6 +194,30 @@ func deleteTicket(db *sql.DB, ticketId string) error {
 	return nil
 }
 
+func modifyTicket(db *sql.DB, updatedTicket Ticket) error {
+	query := `UPDATE ticket SET branch = $2, customer_name = $3, customer_pax_num = $4, customer_phone = $5
+              WHERE id = $1`
+
+	var err = db.QueryRow(query, updatedTicket.Id,
+		updatedTicket.Branch, updatedTicket.CustomerName, updatedTicket.CustomerPaxNum, updatedTicket.CustomerPhone).Scan()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+//(branch, customer_name, customer_pax_num, customer_phone)
+//VALUES ($1, $2, $3, $4)
+//RETURNING id, branch, customer_name, customer_pax_num, customer_phone, created_on_date_time`
+
+//branch VARCHAR(50) NOT NULL,
+//customer_name VARCHAR(100) NOT NULL,
+//customer_pax_num INTEGER NOT NULL CHECK(customer_pax_num > 0),
+//customer_phone VARCHAR(20) NOT NULL,
+//created_on_date_time TIMESTAMP NOT NULL DEFAULT NOW())`
+
 func getTicketsByBranch(db *sql.DB, branch string) ([]DbTicket, error) {
 	query := `SELECT * FROM ticket WHERE branch = $1`
 
