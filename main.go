@@ -58,7 +58,7 @@ func main() {
 	newTicket1 := Ticket{"1", "Damansara", "Bobby", 1, "0122817216"}
 	newTicket2 := Ticket{"1", "Damansara", "Billy", 3, "0122817216"}
 
-	row, exists := getSingleDbTicket(db, newTicket.Id)
+	row, exists := getTicket(db, newTicket.Id)
 
 	if !exists {
 		row = insertDbTicket(db, newTicket)
@@ -161,7 +161,7 @@ func insertDbTicket(db *sql.DB, inputTicket Ticket) (ticket DbTicket) {
 	return ticket
 }
 
-func getSingleDbTicket(db *sql.DB, ticketId string) (ticket DbTicket, exists bool) {
+func getTicket(db *sql.DB, ticketId string) (ticket DbTicket, exists bool) {
 	query := `SELECT * FROM ticket WHERE id = $1`
 
 	err := db.
@@ -181,6 +181,17 @@ func getSingleDbTicket(db *sql.DB, ticketId string) (ticket DbTicket, exists boo
 	}
 
 	return ticket, true
+}
+
+func deleteTicket(db *sql.DB, ticketId string) error {
+	query := `DELETE FROM ticket WHERE id = $1`
+
+	var err = db.QueryRow(query, ticketId).Scan()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getTicketsByBranch(db *sql.DB, branch string) ([]DbTicket, error) {
