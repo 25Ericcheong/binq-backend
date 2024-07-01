@@ -31,11 +31,6 @@ type DbTicket struct {
 	CreatedOnDateTime time.Time
 }
 
-//"branch VARCHAR(50) NOT NULL," +
-//"customer_name VARCHAR(100) NOT NULL," +
-//"customer_pax_num INTEGER NOT NULL CHECK(customer_pax_num > 0)," +
-//"customer_phone VARCHAR(20) NOT NULL," +
-
 func main() {
 	time.Now()
 	fmt.Println("Starting Binq backend server")
@@ -207,16 +202,6 @@ func modifyTicket(db *sql.DB, updatedTicket Ticket) error {
 
 	return nil
 }
-
-//(branch, customer_name, customer_pax_num, customer_phone)
-//VALUES ($1, $2, $3, $4)
-//RETURNING id, branch, customer_name, customer_pax_num, customer_phone, created_on_date_time`
-
-//branch VARCHAR(50) NOT NULL,
-//customer_name VARCHAR(100) NOT NULL,
-//customer_pax_num INTEGER NOT NULL CHECK(customer_pax_num > 0),
-//customer_phone VARCHAR(20) NOT NULL,
-//created_on_date_time TIMESTAMP NOT NULL DEFAULT NOW())`
 
 func getTicketsByBranch(db *sql.DB, branch string) ([]DbTicket, error) {
 	query := `SELECT * FROM ticket WHERE branch = $1`
