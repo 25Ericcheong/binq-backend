@@ -14,3 +14,4 @@ These are notes that I found while researching on how to best maintain certain a
 - Datahase migration will rely solely on golang-migrate package. Will use a script to run the migrations and prior to actual deployment to production; will attempt to build docker container with postgresql and test if migration has taken place
 - [Postgres row data conversion to golang struct](https://stackoverflow.com/questions/17265463/how-do-i-convert-a-database-row-into-a-struct) - is there a better way of doing this without relying on external libraries?
 - ~Timezone for local dev database [has been set](https://stackoverflow.com/questions/6663765/postgres-default-timezone) to `Asia/Kuala_Lumpur`. Will need to do the same for production database too~ Have reset back to default setting
+- Decided to go with Domain Driven Development with an emphasis on my project reflecting the domain's needs and requirements
