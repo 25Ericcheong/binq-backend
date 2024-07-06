@@ -15,3 +15,4 @@ These are notes that I found while researching on how to best maintain certain a
 - [Postgres row data conversion to golang struct](https://stackoverflow.com/questions/17265463/how-do-i-convert-a-database-row-into-a-struct) - is there a better way of doing this without relying on external libraries?
 - ~Timezone for local dev database [has been set](https://stackoverflow.com/questions/6663765/postgres-default-timezone) to `Asia/Kuala_Lumpur`. Will need to do the same for production database too~ Have reset back to default setting
 - Decided to go with Domain Driven Development with an emphasis on my project reflecting the domain's needs and requirements
+- [Understanidng receiver value methods and receiver pointer methods](https://go.dev/wiki/MethodSets#:~:text=The%20method%20set%20of%20the,must%20have%20a%20unique%2)
