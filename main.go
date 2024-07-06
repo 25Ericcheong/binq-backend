@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/25Ericcheong/binq-backend/domain"
+	"github.com/25Ericcheong/binq-backend/repository"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
@@ -24,33 +26,46 @@ func main() {
 	}
 
 	connStr := os.Getenv("DB_CONNECTION_STRING")
-
 	db, err := sql.Open(os.Getenv("DB_DRIVER"), connStr)
 	if err != nil {
 		fmt.Println("Error occurred while trying to setup database")
 		log.Fatal(err.Error())
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	createTicketTable(db)
+
+	ticketRepository := repository.NewTicketRepository(db)
 
 	newTicket := domain.Ticket{Id: "1", Branch: "Damansara", CustomerName: "Eric", CustomerPaxNum: 5, CustomerPhone: "0122817216"}
 	newTicket1 := domain.Ticket{Id: "1", Branch: "Damansara", CustomerName: "Bobby", CustomerPaxNum: 1, CustomerPhone: "0122817216"}
 	newTicket2 := domain.Ticket{Id: "1", Branch: "Damansara", CustomerName: "Billy", CustomerPaxNum: 3, CustomerPhone: "0122817216"}
 
-	row, exists := getTicket(db, newTicket.Id)
-
-	if !exists {
-		row = insertDbTicket(db, newTicket)
+	row, err := ticketRepository.GetTicket(ctx, newTicket.Id)
+	if err != nil {
+		log.Println("Error while trying to get ticket " + newTicket.Id)
+		log.Fatal(err.Error())
 	}
 
-	insertDbTicket(db, newTicket1)
-	insertDbTicket(db, newTicket2)
+	_, err = ticketRepository.CreateTicket(ctx, newTicket1)
+	if err != nil {
+		log.Println("Error while trying to create a ticket")
+		log.Fatal(err.Error())
+	}
 
+	row, err = ticketRepository.CreateTicket(ctx, newTicket2)
+	if err != nil {
+		log.Println("Error while trying to create a ticket")
+		log.Fatal(err.Error())
+	}
 	fmt.Printf("Ticket details \n"+
 		"Id: %s \n"+
 		"Customer Name: %s \n"+
 		"Creation Date: %s \n", row.Id, row.CustomerName, row.CreatedOnDateTime)
 
-	tickets, err := getTicketsByBranch(db, "Damansara")
+	tickets, err := ticketRepository.GetTicketsByBranch(ctx, "Damansara")
 	if err != nil {
 		log.Println("Error while trying to read multiple tickets from a branch")
 		log.Fatal(err.Error())
