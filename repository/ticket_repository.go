@@ -4,22 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"github.com/25Ericcheong/binq-backend/domain"
-	"log"
 )
-
-type TicketRepository interface {
-	CreateTicket(ctx context.Context, newTicket domain.Ticket) (domain.TicketDb, error)
-	GetTicket(ctx context.Context, ticketId string) (domain.TicketDb, error)
-	GetTicketsByBranch(ctx context.Context, branch string) ([]domain.TicketDb, error)
-	UpdateTicket(ctx context.Context, ticketId string) error
-	DeleteTicket(ctx context.Context, ticketId string) error
-}
 
 type psqlTicketRepository struct {
 	DB *sql.DB
 }
 
-func NewTicketRepository(DB *sql.DB) TicketRepository {
+func NewTicketRepository(DB *sql.DB) domain.TicketRepository {
 	return &psqlTicketRepository{
 		DB: DB,
 	}
@@ -43,7 +34,7 @@ func (t *psqlTicketRepository) CreateTicket(ctx context.Context, newTicket domai
 	return createdTicket, nil
 }
 
-func (t *psqlTicketRepository) GetTicket(ctx context.Context, ticketId string) (domain.TicketDb, error) {
+func (t *psqlTicketRepository) GetTicketById(ctx context.Context, ticketId string) (domain.TicketDb, error) {
 	query := `SELECT * FROM ticket WHERE id = $1`
 
 	ticket := domain.TicketDb{}
@@ -66,17 +57,20 @@ func (t *psqlTicketRepository) GetTicketsByBranch(ctx context.Context, branch st
 		return nil, err
 	}
 	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			log.Fatal("Error while trying to close rows of tickets acquired from database")
-		}
+		err = rows.Close()
 	}(rows)
 
 	var tickets []domain.TicketDb
 	for rows.Next() {
 		var ticket domain.TicketDb
-		err := rows.Scan(&ticket.Id, &ticket.Branch, &ticket.CustomerName, &ticket.CustomerPhone,
-			&ticket.CustomerPaxNum, &ticket.CreatedOnDateTime)
+		err := rows.Scan(
+			&ticket.Id,
+			&ticket.Branch,
+			&ticket.CustomerName,
+			&ticket.CustomerPhone,
+			&ticket.CustomerPaxNum,
+			&ticket.CreatedOnDateTime,
+		)
 
 		if err != nil {
 			return nil, err
@@ -88,6 +82,7 @@ func (t *psqlTicketRepository) GetTicketsByBranch(ctx context.Context, branch st
 	if rows.Err() != nil {
 		return nil, err
 	}
+
 	return tickets, nil
 }
 

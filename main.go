@@ -39,15 +39,15 @@ func main() {
 
 	ticketRepository := repository.NewTicketRepository(db)
 
-	newTicket := domain.Ticket{Id: "1", Branch: "Damansara", CustomerName: "Eric", CustomerPaxNum: 5, CustomerPhone: "0122817216"}
-	newTicket1 := domain.Ticket{Id: "1", Branch: "Damansara", CustomerName: "Bobby", CustomerPaxNum: 1, CustomerPhone: "0122817216"}
-	newTicket2 := domain.Ticket{Id: "1", Branch: "Damansara", CustomerName: "Billy", CustomerPaxNum: 3, CustomerPhone: "0122817216"}
+	//newTicket := domain.Ticket{Branch: "Damansara", CustomerName: "Eric", CustomerPaxNum: 5, CustomerPhone: "0122817216"}
+	newTicket1 := domain.Ticket{Branch: "Damansara", CustomerName: "Bobby", CustomerPaxNum: 1, CustomerPhone: "0122817216"}
+	newTicket2 := domain.Ticket{Branch: "Damansara", CustomerName: "Billy", CustomerPaxNum: 3, CustomerPhone: "0122817216"}
 
-	row, err := ticketRepository.GetTicket(ctx, newTicket.Id)
-	if err != nil {
-		log.Println("Error while trying to get ticket " + newTicket.Id)
-		log.Fatal(err.Error())
-	}
+	//row, err := ticketRepository.GetTicketById(ctx, newTicket.Id)
+	//if err != nil {
+	//	log.Println("Error while trying to get ticket " + newTicket.Id)
+	//	log.Fatal(err.Error())
+	//}
 
 	_, err = ticketRepository.CreateTicket(ctx, newTicket1)
 	if err != nil {
@@ -55,7 +55,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	row, err = ticketRepository.CreateTicket(ctx, newTicket2)
+	row, err := ticketRepository.CreateTicket(ctx, newTicket2)
 	if err != nil {
 		log.Println("Error while trying to create a ticket")
 		log.Fatal(err.Error())

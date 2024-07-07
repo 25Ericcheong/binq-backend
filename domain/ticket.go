@@ -1,22 +1,42 @@
 package domain
 
 import (
+	"context"
 	"time"
 )
 
+type TicketRepository interface {
+	CreateTicket(ctx context.Context, newTicket Ticket) (TicketDb, error)
+	GetTicketById(ctx context.Context, ticketId string) (TicketDb, error)
+	GetTicketsByBranch(ctx context.Context, branch string) ([]TicketDb, error)
+	UpdateTicket(ctx context.Context, ticketId string) error
+	DeleteTicket(ctx context.Context, ticketId string) error
+}
+
+type TicketUseCase interface {
+	CreateTicket(ctx context.Context, newTicket TicketRequest) (TicketResponse, error)
+	GetTicketsByBranch(ctx context.Context, branch string) ([]TicketResponse, error)
+	UpdateTicket(ctx context.Context, ticketId string) error
+	DeleteTicket(ctx context.Context, ticketId string) error
+}
+
 type TicketRequest struct {
-	Name   string
-	Phone  string
-	PaxNum int
+	Branch         string
+	CustomerName   string
+	CustomerPaxNum int
+	CustomerPhone  string
 }
 
 type TicketResponse struct {
-	QueueId          string
-	QueuePositionNum int
+	Id                string
+	Branch            string
+	CustomerName      string
+	CustomerPaxNum    int
+	CustomerPhone     string
+	CreatedOnDateTime time.Time
 }
 
 type Ticket struct {
-	Id             string
 	Branch         string
 	CustomerName   string
 	CustomerPaxNum int
