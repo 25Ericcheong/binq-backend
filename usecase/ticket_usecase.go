@@ -16,26 +16,28 @@ func NewTicketUseCase(t domain.TicketRepository) domain.TicketUseCase {
 }
 
 func (t *ticketUseCase) CreateTicket(ctx context.Context, newTicket domain.CreateTicketRequest) (domain.CreateTicketResponse, error) {
-
-	ticket := domain.Ticket{
+	var ticket domain.CreateTicketResponse
+	ticketInput := domain.Ticket{
 		Branch:         newTicket.Branch,
 		CustomerName:   newTicket.CustomerName,
 		CustomerPaxNum: newTicket.CustomerPaxNum,
 		CustomerPhone:  newTicket.CustomerPhone,
 	}
 
-	ticketDb, err := t.ticketRepo.CreateTicket(ctx, ticket)
+	ticketDb, err := t.ticketRepo.CreateTicket(ctx, ticketInput)
 	if err != nil {
-		return domain.CreateTicketResponse{}, err
+		return ticket, err
 	}
 
-	return domain.CreateTicketResponse{
+	ticket = domain.CreateTicketResponse{
 		Id:             ticketDb.Id,
 		Branch:         ticketDb.Branch,
 		CustomerName:   ticketDb.CustomerName,
 		CustomerPhone:  ticketDb.CustomerPhone,
 		CustomerPaxNum: ticketDb.CustomerPaxNum,
-	}, nil
+	}
+
+	return ticket, nil
 }
 
 func (t *ticketUseCase) GetTicketsByBranch(ctx context.Context, branch string) ([]domain.GetTicketByBranchResponse, error) {
@@ -60,10 +62,27 @@ func (t *ticketUseCase) GetTicketsByBranch(ctx context.Context, branch string) (
 	return ticketsByBranch, nil
 }
 
-func (t *ticketUseCase) UpdateTicket(ctx context.Context, ticketId string) error {
+func (t *ticketUseCase) UpdateTicket(ctx context.Context, updatedTicket domain.UpdateTicketRequest) error {
+	ticketInput := domain.Ticket{
+		Branch:         updatedTicket.Branch,
+		CustomerName:   updatedTicket.CustomerName,
+		CustomerPhone:  updatedTicket.CustomerPhone,
+		CustomerPaxNum: updatedTicket.CustomerPaxNum,
+	}
+
+	err := t.ticketRepo.UpdateTicket(ctx, updatedTicket.Id, ticketInput)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (t *ticketUseCase) DeleteTicket(ctx context.Context, ticketId string) error {
+	err := t.ticketRepo.DeleteTicket(ctx, ticketId)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

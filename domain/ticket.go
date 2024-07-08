@@ -9,14 +9,14 @@ type TicketRepository interface {
 	CreateTicket(ctx context.Context, newTicket Ticket) (TicketDb, error)
 	GetTicketById(ctx context.Context, ticketId string) (TicketDb, error)
 	GetTicketsByBranch(ctx context.Context, branch string) ([]TicketDb, error)
-	UpdateTicket(ctx context.Context, ticketId string) error
+	UpdateTicket(ctx context.Context, ticketId string, updatedTicket Ticket) error
 	DeleteTicket(ctx context.Context, ticketId string) error
 }
 
 type TicketUseCase interface {
 	CreateTicket(ctx context.Context, newTicket CreateTicketRequest) (CreateTicketResponse, error)
 	GetTicketsByBranch(ctx context.Context, branch string) ([]GetTicketByBranchResponse, error)
-	UpdateTicket(ctx context.Context, ticketId string) error
+	UpdateTicket(ctx context.Context, updatedTicket UpdateTicketRequest) error
 	DeleteTicket(ctx context.Context, ticketId string) error
 }
 
@@ -42,6 +42,14 @@ type GetTicketByBranchResponse struct {
 	CustomerPaxNum    int
 	CustomerPhone     string
 	CreatedOnDateTime time.Time
+}
+
+type UpdateTicketRequest struct {
+	Id             string
+	Branch         string
+	CustomerName   string
+	CustomerPaxNum int
+	CustomerPhone  string
 }
 
 type Ticket struct {

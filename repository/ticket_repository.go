@@ -86,12 +86,11 @@ func (t *psqlTicketRepository) GetTicketsByBranch(ctx context.Context, branch st
 	return tickets, nil
 }
 
-func (t *psqlTicketRepository) UpdateTicket(ctx context.Context, ticketId string) error {
+func (t *psqlTicketRepository) UpdateTicket(ctx context.Context, ticketId string, updatedTicket domain.Ticket) error {
 	query := `UPDATE ticket SET branch = $2, customer_name = $3, customer_pax_num = $4, customer_phone = $5
               WHERE id = $1`
 
-	updatedTicket := domain.TicketDb{}
-	var err = t.DB.QueryRow(query, updatedTicket.Id,
+	var err = t.DB.QueryRow(query, ticketId,
 		updatedTicket.Branch, updatedTicket.CustomerName, updatedTicket.CustomerPaxNum, updatedTicket.CustomerPhone).Scan()
 
 	if err != nil {
