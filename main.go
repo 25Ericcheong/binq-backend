@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"database/sql"
-	"errors"
 	"fmt"
+	"github.com/25Ericcheong/binq-backend/domain"
+	"github.com/25Ericcheong/binq-backend/repository"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
@@ -13,23 +15,6 @@ import (
 	// to be able to open postgres driver
 	_ "github.com/lib/pq"
 )
-
-type Ticket struct {
-	Id             string
-	Branch         string
-	CustomerName   string
-	CustomerPaxNum int
-	CustomerPhone  string
-}
-
-type DbTicket struct {
-	Id                string
-	Branch            string
-	CustomerName      string
-	CustomerPaxNum    int
-	CustomerPhone     string
-	CreatedOnDateTime time.Time
-}
 
 func main() {
 	time.Now()
@@ -41,33 +26,46 @@ func main() {
 	}
 
 	connStr := os.Getenv("DB_CONNECTION_STRING")
-
 	db, err := sql.Open(os.Getenv("DB_DRIVER"), connStr)
 	if err != nil {
 		fmt.Println("Error occurred while trying to setup database")
 		log.Fatal(err.Error())
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	createTicketTable(db)
 
-	newTicket := Ticket{"1", "Damansara", "Eric", 5, "0122817216"}
-	newTicket1 := Ticket{"1", "Damansara", "Bobby", 1, "0122817216"}
-	newTicket2 := Ticket{"1", "Damansara", "Billy", 3, "0122817216"}
+	ticketRepository := repository.NewTicketRepository(db)
 
-	row, exists := getTicket(db, newTicket.Id)
+	//newTicket := domain.Ticket{Branch: "Damansara", CustomerName: "Eric", CustomerPaxNum: 5, CustomerPhone: "0122817216"}
+	newTicket1 := domain.Ticket{Branch: "Damansara", CustomerName: "Bobby", CustomerPaxNum: 1, CustomerPhone: "0122817216"}
+	newTicket2 := domain.Ticket{Branch: "Damansara", CustomerName: "Billy", CustomerPaxNum: 3, CustomerPhone: "0122817216"}
 
-	if !exists {
-		row = insertDbTicket(db, newTicket)
+	//row, err := ticketRepository.GetTicketById(ctx, newTicket.Id)
+	//if err != nil {
+	//	log.Println("Error while trying to get ticket " + newTicket.Id)
+	//	log.Fatal(err.Error())
+	//}
+
+	_, err = ticketRepository.CreateTicket(ctx, newTicket1)
+	if err != nil {
+		log.Println("Error while trying to create a ticket")
+		log.Fatal(err.Error())
 	}
 
-	insertDbTicket(db, newTicket1)
-	insertDbTicket(db, newTicket2)
-
+	row, err := ticketRepository.CreateTicket(ctx, newTicket2)
+	if err != nil {
+		log.Println("Error while trying to create a ticket")
+		log.Fatal(err.Error())
+	}
 	fmt.Printf("Ticket details \n"+
 		"Id: %s \n"+
 		"Customer Name: %s \n"+
 		"Creation Date: %s \n", row.Id, row.CustomerName, row.CreatedOnDateTime)
 
-	tickets, err := getTicketsByBranch(db, "Damansara")
+	tickets, err := ticketRepository.GetTicketsByBranch(ctx, "Damansara")
 	if err != nil {
 		log.Println("Error while trying to read multiple tickets from a branch")
 		log.Fatal(err.Error())
@@ -136,102 +134,4 @@ func createTicketTable(db *sql.DB) {
 		fmt.Println("Error while creating ticket table")
 		log.Fatal(err.Error())
 	}
-}
-
-func insertDbTicket(db *sql.DB, inputTicket Ticket) (ticket DbTicket) {
-	query := `INSERT INTO ticket 
-    	(branch, customer_name, customer_pax_num, customer_phone) 
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, branch, customer_name, customer_pax_num, customer_phone, created_on_date_time`
-
-	err := db.
-		QueryRow(query, inputTicket.Branch, inputTicket.CustomerName, inputTicket.CustomerPaxNum, inputTicket.CustomerPhone).
-		Scan(&ticket.Id, &ticket.Branch, &ticket.CustomerName, &ticket.CustomerPaxNum, &ticket.CustomerPhone, &ticket.CreatedOnDateTime)
-
-	if err != nil {
-		fmt.Println("Error while inserting ticket into ticket table")
-		log.Fatal(err.Error())
-	}
-
-	return ticket
-}
-
-func getTicket(db *sql.DB, ticketId string) (ticket DbTicket, exists bool) {
-	query := `SELECT * FROM ticket WHERE id = $1`
-
-	err := db.
-		QueryRow(query, ticketId).
-		Scan(&ticket.Id, &ticket.Branch, &ticket.CustomerName, &ticket.CustomerPaxNum, &ticket.CustomerPhone, &ticket.CreatedOnDateTime)
-
-	if err != nil {
-
-		if errors.Is(err, sql.ErrNoRows) {
-			fmt.Println("No row found with provided id: " + ticketId)
-			return DbTicket{}, false
-		}
-
-		//Probably no rows found
-		fmt.Println("Unexpected error " + err.Error())
-		return DbTicket{}, false
-	}
-
-	return ticket, true
-}
-
-func deleteTicket(db *sql.DB, ticketId string) error {
-	query := `DELETE FROM ticket WHERE id = $1`
-
-	var err = db.QueryRow(query, ticketId).Scan()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func modifyTicket(db *sql.DB, updatedTicket Ticket) error {
-	query := `UPDATE ticket SET branch = $2, customer_name = $3, customer_pax_num = $4, customer_phone = $5
-              WHERE id = $1`
-
-	var err = db.QueryRow(query, updatedTicket.Id,
-		updatedTicket.Branch, updatedTicket.CustomerName, updatedTicket.CustomerPaxNum, updatedTicket.CustomerPhone).Scan()
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func getTicketsByBranch(db *sql.DB, branch string) ([]DbTicket, error) {
-	query := `SELECT * FROM ticket WHERE branch = $1`
-
-	rows, err := db.Query(query, branch)
-	if err != nil {
-		return nil, err
-	}
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			log.Fatal("Error while trying to close rows of tickets acquired from database")
-		}
-	}(rows)
-
-	var tickets []DbTicket
-
-	for rows.Next() {
-		var ticket DbTicket
-		err := rows.Scan(&ticket.Id, &ticket.Branch, &ticket.CustomerName, &ticket.CustomerPhone,
-			&ticket.CustomerPaxNum, &ticket.CreatedOnDateTime)
-
-		if err != nil {
-			return tickets, err
-		}
-		tickets = append(tickets, ticket)
-	}
-
-	if rows.Err() != nil {
-		return tickets, err
-	}
-	return tickets, nil
 }
