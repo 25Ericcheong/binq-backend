@@ -14,8 +14,8 @@ type TicketRepository interface {
 }
 
 type TicketUseCase interface {
-	CreateTicket(ctx context.Context, newTicket CreateTicketRequest) (TicketResponse, error)
-	GetTicketsByBranch(ctx context.Context, branch string) ([]TicketResponse, error)
+	CreateTicket(ctx context.Context, newTicket CreateTicketRequest) (CreateTicketResponse, error)
+	GetTicketsByBranch(ctx context.Context, branch string) ([]GetTicketByBranchResponse, error)
 	UpdateTicket(ctx context.Context, ticketId string) error
 	DeleteTicket(ctx context.Context, ticketId string) error
 }
@@ -27,7 +27,15 @@ type CreateTicketRequest struct {
 	CustomerPhone  string
 }
 
-type TicketResponse struct {
+type CreateTicketResponse struct {
+	Id             string
+	Branch         string
+	CustomerName   string
+	CustomerPaxNum int
+	CustomerPhone  string
+}
+
+type GetTicketByBranchResponse struct {
 	Id                string
 	Branch            string
 	CustomerName      string
