@@ -3,13 +3,21 @@ package usecase
 import (
 	"context"
 	"github.com/25Ericcheong/binq-backend/domain"
+	"github.com/25Ericcheong/binq-backend/repository"
 )
 
-type ticketUseCase struct {
-	ticketRepo domain.TicketRepository
+type TicketUseCase interface {
+	CreateTicket(ctx context.Context, newTicket domain.CreateTicketRequest) (domain.CreateTicketResponse, error)
+	GetTicketsByBranch(ctx context.Context, branch string) ([]domain.GetTicketByBranchResponse, error)
+	UpdateTicket(ctx context.Context, updatedTicket domain.UpdateTicketRequest) error
+	DeleteTicket(ctx context.Context, ticketId string) error
 }
 
-func NewTicketUseCase(t domain.TicketRepository) domain.TicketUseCase {
+type ticketUseCase struct {
+	ticketRepo repository.TicketRepository
+}
+
+func NewTicketUseCase(t repository.TicketRepository) TicketUseCase {
 	return &ticketUseCase{
 		ticketRepo: t,
 	}
