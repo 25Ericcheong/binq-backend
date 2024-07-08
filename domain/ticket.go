@@ -14,13 +14,13 @@ type TicketRepository interface {
 }
 
 type TicketUseCase interface {
-	CreateTicket(ctx context.Context, newTicket TicketRequest) (TicketResponse, error)
+	CreateTicket(ctx context.Context, newTicket CreateTicketRequest) (TicketResponse, error)
 	GetTicketsByBranch(ctx context.Context, branch string) ([]TicketResponse, error)
 	UpdateTicket(ctx context.Context, ticketId string) error
 	DeleteTicket(ctx context.Context, ticketId string) error
 }
 
-type TicketRequest struct {
+type CreateTicketRequest struct {
 	Branch         string
 	CustomerName   string
 	CustomerPaxNum int

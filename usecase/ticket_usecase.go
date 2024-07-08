@@ -15,7 +15,7 @@ func NewTicketUseCase(t domain.TicketRepository) domain.TicketUseCase {
 	}
 }
 
-func (t *ticketUseCase) CreateTicket(ctx context.Context, newTicket domain.TicketRequest) (domain.TicketResponse, error) {
+func (t *ticketUseCase) CreateTicket(ctx context.Context, newTicket domain.CreateTicketRequest) (domain.TicketResponse, error) {
 
 	ticket := domain.Ticket{
 		Branch:         newTicket.Branch,
